@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "version": "1.0.0",
+  "name": "Gineko - Github code search",
+  "short_name": "Gineko",
+  "author": "Tran Ba Thanh Tung",
+  "description": "VSCode-like search for Github",
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "browser_action": {},
+  "content_scripts": [
+    {
+      "all_frames": false,
+      "matches": ["https://github.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "permissions": [
+    "https://github.com/*",
+    "https://api.github.com/*"
+  ],
+  "icons": {
+    "16": "assets/icons/icon-16x16.png",
+    "48": "assets/icons/icon-48x48.png",
+    "128": "assets/icons/icon-128x128.png"
+  },
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'; connect-src ws://localhost:*/",
+  "web_accessible_resources": ["*.png"]
+}
