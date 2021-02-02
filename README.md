@@ -4,7 +4,7 @@
 
 ## Supported Browser
 
-<img alt="Chrome" src="https://img.icons8.com/fluent/24/000000/chrome.png" align="center"/> Install extension from [Chrome Web Store]()
+<img alt="Chrome" src="https://img.icons8.com/fluent/24/000000/chrome.png" align="center"/> Install extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/gineko-github-code-search/kcehbgaiaeifnpdhleceeckldighdlgk)
 
 ## Features 🔥
 
