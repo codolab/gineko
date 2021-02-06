@@ -35,6 +35,12 @@ const FileExplorer = forwardRef((props, ref) => {
   const [shouldDebounce, setShouldDebounce] = useState(isHugRepo(items));
   const [searchLoading, setSearchLoading] = useState(false);
 
+  const scrollToItem = useCallback((highlightedIndex) => {
+    if (listRef.current !== null) {
+      listRef.current.scrollToItem(highlightedIndex);
+    }
+  }, []);
+
   const fuse = useMemo(
     () =>
       new Fuse(items, {
@@ -82,12 +88,13 @@ const FileExplorer = forwardRef((props, ref) => {
 
   const {
     isOpen,
+    selectedItem,
+    highlightedIndex,
     getMenuProps,
     getInputProps,
     getComboboxProps,
-    selectedItem,
-    highlightedIndex,
     getItemProps,
+    setHighlightedIndex,
   } = useCombobox({
     inputValue,
     defaultHighlightedIndex: 0,
@@ -109,11 +116,17 @@ const FileExplorer = forwardRef((props, ref) => {
       if (type === useCombobox.stateChangeTypes.InputBlur) return state;
       return changes;
     },
+    onStateChange: (rest) => {
+      if (rest.hasOwnProperty("highlightedIndex")) {
+        scrollToItem(rest.highlightedIndex);
+      }
+    },
   });
 
   useEffect(() => {
     if (!loading) {
       setInputItems(items);
+      setHighlightedIndex(items.length ? 0 : null);
     }
     setShouldDebounce(isHugRepo(items));
   }, [items]);
