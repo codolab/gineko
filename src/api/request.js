@@ -99,11 +99,11 @@ const request = async (url, _options) => {
   }
 
   try {
+    response = checkStatus(response);
     if (options.useCache) {
       response = cachedSave(response, hashcode);
     }
-    response = checkStatus(response);
-
+    
     return response.json();
   } catch (e) {
     throw e;
