@@ -50,13 +50,13 @@ function FileWidget() {
     [setOpen]
   );
 
-  const close = useCallback(() => setOpen(false), [setOpen]);
+  const close = useCallback((cb) => setOpen(false, cb), [setOpen]);
 
-  const onSelectedItemChange = useCallback(
+  const handleSelectedItemChange = useCallback(
     (item) => {
       const path = `/${repo.username}/${repo.reponame}/blob/${repo.branch}/${item.inputValue}`;
       close();
-      loadWithPJAX(path);
+      // loadWithPJAX(path);
     },
     [repo, close]
   );
@@ -91,6 +91,8 @@ function FileWidget() {
     setTree(sortedTree);
   }, [cachedFiles]);
 
+  console.log(open)
+
   return (
     <Modal
       isOpen={open}
@@ -105,7 +107,7 @@ function FileWidget() {
         items={parsePath(tree)}
         loading={loading}
         error={error}
-        onSelectedItemChange={onSelectedItemChange}
+        onSelectedItemChange={handleSelectedItemChange}
       />
     </Modal>
   );

@@ -45,7 +45,7 @@ const FileExplorer = forwardRef((props, ref) => {
     () =>
       new Fuse(items, {
         includeScore: true,
-        keys: ["basename", "dirname"],
+        keys: ["basename", "dirname", "path"],
       }),
     [items]
   );
