@@ -11,8 +11,8 @@ import {
 import { useCombobox } from "downshift";
 import { FixedSizeList as List } from "react-window";
 import { cls } from "candy-moon";
-import { unstable_scheduleCallback } from "scheduler";
 import Fuse from "fuse.js";
+import { unstable_scheduleCallback } from "scheduler";
 
 import { useDebounce } from "hooks";
 import * as Constants from "common/constants";
@@ -109,21 +109,6 @@ const FileExplorer = forwardRef((props, ref) => {
       if (type === useCombobox.stateChangeTypes.InputBlur) return state;
       return changes;
     },
-    onStateChange: ({ inputValue, type, selectedItem }) => {
-      switch (type) {
-        case useCombobox.stateChangeTypes.InputChange:
-          unstable_scheduleCallback(() => {
-            setInputValue(inputValue);
-          })
-          break;
-        case useCombobox.stateChangeTypes.InputKeyDownEnter:
-        case useCombobox.stateChangeTypes.ItemClick:
-        case useCombobox.stateChangeTypes.InputBlur:
-          break;
-        default:
-          break;
-      }
-    },
   });
 
   useEffect(() => {
@@ -141,6 +126,9 @@ const FileExplorer = forwardRef((props, ref) => {
             ref,
             placeholder,
             loading: searchLoading,
+            onChange: (e) => {
+              setInputValue(e.target.value);
+            },
           })}
         />
       </div>
