@@ -19,6 +19,7 @@ import * as Constants from "common/constants";
 import ErrorMessage from "views/ErrorMessage";
 import Spinner from "views/Spinner";
 import FileIcon from "views/FileIcon";
+import Alert from "views/Alert";
 
 import FileInput from "./FileInput";
 import Highlighter from "./Highlighter";
@@ -34,6 +35,7 @@ const FileExplorer = forwardRef((props, ref) => {
   const [inputValue, setInputValue] = useState("");
   const [shouldDebounce, setShouldDebounce] = useState(isHugRepo(items));
   const [searchLoading, setSearchLoading] = useState(false);
+  const [isOpenAlert, setIsOpenAlert] = useState(true);
 
   const scrollToItem = useCallback((highlightedIndex) => {
     if (listRef.current !== null) {
@@ -83,7 +85,7 @@ const FileExplorer = forwardRef((props, ref) => {
       },
       [fuse, setInputItems, setSearchLoading]
     ),
-    300
+    500
   );
 
   const {
@@ -133,6 +135,19 @@ const FileExplorer = forwardRef((props, ref) => {
 
   return (
     <div cls="w-full flex-col">
+      {shouldDebounce && (
+        <Alert
+          status="warning"
+          closeable
+          isOpen={isOpenAlert}
+          onClose={() => {
+            setIsOpenAlert(false);
+            ref.current?.focus?.();
+          }}
+        >
+          This branch is too big.
+        </Alert>
+      )}
       <div {...getComboboxProps()} cls="p-4 mb-2">
         <FileInput
           {...getInputProps({

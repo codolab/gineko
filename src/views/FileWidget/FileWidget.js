@@ -1,36 +1,16 @@
 /** @jsx jsx */
 import { jsx } from "candy-moon/jsx";
 import { useState, useRef, useCallback, useEffect } from "react";
-import memoize from "fast-memoize";
 
 import * as Constants from "common/constants";
 import { useEmitter } from "hooks";
 import { loadWithPJAX } from "hooks/usePJAX";
-import { path } from "services";
 import { useApp } from "views/AppContext";
 import Modal from "views/Modal";
 import API from "api";
 
 import FileExplorer from "./FileExplorer";
-
-const parsePath = (tree) =>
-  tree.map((t) => ({
-    ...t,
-    basename: path.basename(t?.path || ""),
-    dirname: path.dirname(t?.path || ""),
-  }));
-
-const mapOrder = memoize((tree, order, key) => {
-  if (!Array.isArray(order) || order.length === 0) return tree;
-  const treeWithoutLocalFiles = tree.filter(
-    (t) => order.indexOf(t[key]) === -1
-  );
-  const files = order
-    .map((file) => tree.find((t) => t[key] === file))
-    .filter((file) => !!file);
-
-  return [...files].concat(treeWithoutLocalFiles);
-});
+import { mapTree, parseTree } from "./tree";
 
 function FileWidget() {
   const { repo, cachedFiles } = useApp();
@@ -56,7 +36,7 @@ function FileWidget() {
     (item) => {
       const path = `/${repo.username}/${repo.reponame}/blob/${repo.branch}/${item.inputValue}`;
       close();
-      // loadWithPJAX(path);
+      loadWithPJAX(path);
     },
     [repo, close]
   );
@@ -66,7 +46,8 @@ function FileWidget() {
       try {
         setLoading(true);
         const tree = await API.fetchFiles(repo);
-        const sortedTree = mapOrder(tree, cachedFiles, "path");
+        const parsedTree = await parseTree(tree);
+        const sortedTree = await mapTree(parsedTree, cachedFiles, "path");
 
         setTree(sortedTree);
         setError(null);
@@ -86,12 +67,16 @@ function FileWidget() {
   }, [open]);
 
   useEffect(() => {
-    const sortedTree = mapOrder(tree, cachedFiles, "path");
+    async function handleTree() {
+      setLoading(true);
+      const parsedTree = await parseTree(tree);
+      const sortedTree = await mapTree(parsedTree, cachedFiles, "path");
+      setTree(sortedTree);
+      setLoading(false);
+    }
 
-    setTree(sortedTree);
+    handleTree();
   }, [cachedFiles]);
-
-  console.log(open)
 
   return (
     <Modal
@@ -104,7 +89,7 @@ function FileWidget() {
       <FileExplorer
         ref={inputRef}
         placeholder="Jump to file..."
-        items={parsePath(tree)}
+        items={tree}
         loading={loading}
         error={error}
         onSelectedItemChange={handleSelectedItemChange}

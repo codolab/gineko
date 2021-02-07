@@ -1,3 +1,4 @@
+import Alert from "./Alert";
 import Button from "./Button";
 import Drawer from "./Drawer";
 import IconButton from "./IconButton";
@@ -6,6 +7,7 @@ import Modal from "./Modal";
 import SelectMenu from "./SelectMenu";
 
 const components = {
+  Alert,
   Button,
   Drawer,
   IconButton,
