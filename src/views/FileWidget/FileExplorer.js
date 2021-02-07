@@ -11,37 +11,50 @@ import {
 import { useCombobox } from "downshift";
 import { FixedSizeList as List } from "react-window";
 import { cls } from "candy-moon";
-import { unstable_scheduleCallback } from "scheduler";
 import Fuse from "fuse.js";
+import { unstable_scheduleCallback } from "scheduler";
 
 import { useDebounce } from "hooks";
 import * as Constants from "common/constants";
 import ErrorMessage from "views/ErrorMessage";
 import Spinner from "views/Spinner";
 import FileIcon from "views/FileIcon";
+import Alert from "views/Alert";
 
 import FileInput from "./FileInput";
 import Highlighter from "./Highlighter";
 
-const isHugRepo = (items) => items.length > Constants.HugeRepo;
-
 const FileExplorer = forwardRef((props, ref) => {
-  const { onSelectedItemChange, placeholder, items, loading, error } = props;
+  const {
+    onSelectedItemChange,
+    placeholder,
+    tree,
+    truncated,
+    loading,
+    error,
+    isOpenAlert,
+    setIsOpenAlert,
+  } = props;
 
   const listRef = useRef(null);
 
-  const [inputItems, setInputItems] = useState(items);
+  const [inputItems, setInputItems] = useState(tree);
   const [inputValue, setInputValue] = useState("");
-  const [shouldDebounce, setShouldDebounce] = useState(isHugRepo(items));
   const [searchLoading, setSearchLoading] = useState(false);
+
+  const scrollToItem = useCallback((highlightedIndex) => {
+    if (listRef.current !== null) {
+      listRef.current.scrollToItem(highlightedIndex);
+    }
+  }, []);
 
   const fuse = useMemo(
     () =>
-      new Fuse(items, {
+      new Fuse(tree, {
         includeScore: true,
-        keys: ["basename", "dirname"],
+        keys: ["basename", "dirname", "path"],
       }),
-    [items]
+    [tree]
   );
 
   const itemToString = useCallback((item) => {
@@ -55,10 +68,10 @@ const FileExplorer = forwardRef((props, ref) => {
         .map((v) => v.item);
 
       if (!inputValue || (inputValue.trim() === "" && results.length === 0))
-        setInputItems(items);
+        setInputItems(tree);
       else setInputItems(results);
     },
-    [fuse, items, setInputItems]
+    [fuse, tree, setInputItems]
   );
 
   const fuseSearchDebounced = useDebounce(
@@ -70,24 +83,25 @@ const FileExplorer = forwardRef((props, ref) => {
             .map((v) => v.item);
 
           if (!inputValue || (inputValue.trim() === "" && results.length === 0))
-            setInputItems(items);
+            setInputItems(tree);
           else setInputItems(results);
           setSearchLoading(false);
         });
       },
-      [fuse, setInputItems, setSearchLoading]
+      [fuse, tree, setInputItems, setSearchLoading]
     ),
-    300
+    500
   );
 
   const {
     isOpen,
+    selectedItem,
+    highlightedIndex,
     getMenuProps,
     getInputProps,
     getComboboxProps,
-    selectedItem,
-    highlightedIndex,
     getItemProps,
+    setHighlightedIndex,
   } = useCombobox({
     inputValue,
     defaultHighlightedIndex: 0,
@@ -97,7 +111,7 @@ const FileExplorer = forwardRef((props, ref) => {
     onSelectedItemChange,
     onInputValueChange: ({ inputValue, type }) => {
       if (type === useCombobox.stateChangeTypes.InputKeyDownEnter) return;
-      if (shouldDebounce) {
+      if (truncated) {
         setSearchLoading(true);
         fuseSearchDebounced(inputValue);
       } else {
@@ -109,38 +123,44 @@ const FileExplorer = forwardRef((props, ref) => {
       if (type === useCombobox.stateChangeTypes.InputBlur) return state;
       return changes;
     },
-    onStateChange: ({ inputValue, type, selectedItem }) => {
-      switch (type) {
-        case useCombobox.stateChangeTypes.InputChange:
-          unstable_scheduleCallback(() => {
-            setInputValue(inputValue);
-          })
-          break;
-        case useCombobox.stateChangeTypes.InputKeyDownEnter:
-        case useCombobox.stateChangeTypes.ItemClick:
-        case useCombobox.stateChangeTypes.InputBlur:
-          break;
-        default:
-          break;
+    onStateChange: (rest) => {
+      if (rest.hasOwnProperty("highlightedIndex")) {
+        scrollToItem(rest.highlightedIndex);
       }
     },
   });
 
   useEffect(() => {
     if (!loading) {
-      setInputItems(items);
+      setInputItems(tree);
+      setHighlightedIndex(tree.length ? 0 : null);
     }
-    setShouldDebounce(isHugRepo(items));
-  }, [items]);
+  }, [tree]);
 
   return (
     <div cls="w-full flex-col">
+      {truncated && (
+        <Alert
+          status="warning"
+          closeable
+          isOpen={isOpenAlert}
+          onClose={() => {
+            setIsOpenAlert(false);
+            ref.current?.focus?.();
+          }}
+        >
+          This branch is too big.
+        </Alert>
+      )}
       <div {...getComboboxProps()} cls="p-4 mb-2">
         <FileInput
           {...getInputProps({
             ref,
             placeholder,
             loading: searchLoading,
+            onChange: (e) => {
+              setInputValue(e.target.value);
+            },
           })}
         />
       </div>

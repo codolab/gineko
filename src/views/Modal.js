@@ -17,9 +17,7 @@ const Modal = forwardRef((props, ref) => {
       className={clsx(styles.overlay, className)}
       {...rest}
     >
-      <DialogContent className={styles.content}>
-        {children}
-      </DialogContent>
+      <DialogContent className={styles.content}>{children}</DialogContent>
     </DialogOverlay>
   );
 });

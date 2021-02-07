@@ -10,7 +10,7 @@ const initialState = {
 
 export default function useSearch(
   api,
-  { params, cache, wait = 300, onLoaded }
+  { params, cache, wait = 500, onLoaded }
 ) {
   const mounted = useRef(false);
   const requestId = useRef(0);

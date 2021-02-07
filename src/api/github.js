@@ -99,7 +99,10 @@ export const fetchFiles = async (params) => {
       expirys: Constants.EXPIRYS,
     });
 
-    return (data.tree || []).filter((t) => t.type === "blob");
+    return {
+      tree: (data.tree || []).filter((t) => t.type === "blob"),
+      truncated: data.truncated,
+    };
   } catch (e) {
     throw e;
   }

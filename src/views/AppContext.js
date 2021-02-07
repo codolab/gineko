@@ -37,7 +37,7 @@ function deleteRepo(extras, repos) {
 const changes = ["js-repo-pjax-container", "blob-path"];
 
 export default function AppController({ children }) {
-  const [repo] = useState(services.resolveRepo());
+  const [repo, setRepo] = useState(services.resolveRepo());
   const [shouldRenderSidebar, setShouldRenderSidebar] = useState(
     services.shouldRenderSidebar()
   );
@@ -62,6 +62,7 @@ export default function AppController({ children }) {
       if (!mainEl) return;
 
       setShouldRenderSidebar(services.shouldRenderSidebar());
+      setRepo(services.resolveRepo());
 
       let currentPath = url.getCurrentPath(repo.branch).join("/");
       if (!currentPath || currentPath === "") return;
@@ -113,7 +114,7 @@ export default function AppController({ children }) {
     };
   }, [repo, shouldRenderSidebar, cachedRepositories]);
 
-  if (!repo) return null;
+  if (!repo || !repo.branch) return null;
 
   return <AppContext.Provider value={context}>{children}</AppContext.Provider>;
 }
