@@ -6,7 +6,6 @@ const ErrorBoundary = (props) => {
   const [error, resetError] = useErrorBoundary();
   
   if (error) {
-    console.log(error)
     window.alert(error.message || "Something went wrong!!!");
     return null;
   } else {

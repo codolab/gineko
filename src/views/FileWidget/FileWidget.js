@@ -17,28 +17,28 @@ const reducer = (state, action) => {
   let { isOpenModal, isOpenAlert, truncated, tree, loading, error } = state;
 
   switch (action.type) {
-    case "fetch.tree.pending":
+    case Constants.FetchTreePending:
       tree = [];
       truncated = false;
       loading = true;
       error = null;
       break;
-    case "fetch.tree.success":
+    case Constants.FetchTreeSuccess:
       tree = action.payload.tree;
       truncated = action.payload.truncated;
       loading = false;
       error = null;
       break;
-    case "fetch.tree.error":
+    case Constants.FetchTreeError:
       tree = [];
       truncated = false;
       loading = false;
       error = action.payload.error;
       break;
-    case "modal.set":
+    case Constants.SetModalOpen:
       isOpenModal = action.payload;
       break;
-    case "alert.set":
+    case Constants.SetAlertOpen:
       isOpenAlert = action.payload;
       break;
     default:
@@ -74,13 +74,13 @@ function FileWidget() {
   useEmitter(
     Constants.FindFilesActionId,
     () => {
-      dispatch({ type: "modal.set", payload: true });
+      dispatch({ type: Constants.SetModalOpen, payload: true });
     },
     []
   );
 
   const handleDismiss = useCallback(() => {
-    dispatch({ type: "modal.set", payload: false });
+    dispatch({ type: Constants.SetModalOpen, payload: false });
   }, []);
 
   const handleSelectedItemChange = useCallback(
@@ -93,19 +93,19 @@ function FileWidget() {
   );
 
   const handleSetIsOpenAlert = useCallback(() => {
-    dispatch({ type: "alert.set", payload: false });
+    dispatch({ type: Constants.SetAlertOpen, payload: false });
   }, []);
 
   useEffect(() => {
     async function handleFetchTree() {
       try {
-        dispatch({ type: "fetch.tree.pending" });
+        dispatch({ type: Constants.FetchTreePending });
         const { tree, truncated } = await API.fetchFiles(repo);
         const parsedTree = await parseTree(tree);
         const sortedTree = await mapTree(parsedTree, cachedFiles, "path");
 
         dispatch({
-          type: "fetch.tree.success",
+          type: Constants.FetchTreeSuccess,
           payload: {
             tree: sortedTree,
             truncated,
@@ -114,7 +114,7 @@ function FileWidget() {
         loaded.current = true;
       } catch (error) {
         dispatch({
-          type: "fetch.tree.error",
+          type: Constants.FetchTreeError,
           payload: {
             error: error.message,
           },
@@ -131,12 +131,12 @@ function FileWidget() {
 
   useEffect(() => {
     async function handleTree() {
-      dispatch({ type: "fetch.tree.pending" });
+      dispatch({ type: Constants.FetchTreePending });
       const parsedTree = await parseTree(state.tree);
       const sortedTree = await mapTree(parsedTree, cachedFiles, "path");
 
       dispatch({
-        type: "fetch.tree.success",
+        type: Constants.FetchTreeSuccess,
         payload: {
           tree: sortedTree,
           truncated: state.truncated,
