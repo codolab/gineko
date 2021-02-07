@@ -2,8 +2,6 @@ export const FindCodeInFilesActionId = "search.action.findCodeInFiles";
 export const FindFilesActionId = "file.action.findFiles";
 export const ToggleSideBar = "toggle.sidebar";
 
-export const HugeRepo = 5000;
-
 export const HeightOfFile = 38;
 export const HeightOfLine = 28;
 export const LinesLimit = 10;

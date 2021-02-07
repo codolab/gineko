@@ -1,6 +1,6 @@
 /** @jsx jsx */
 import { jsx } from "candy-moon/jsx";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect, useReducer } from "react";
 
 import * as Constants from "common/constants";
 import { useEmitter } from "hooks";
@@ -12,12 +12,61 @@ import API from "api";
 import FileExplorer from "./FileExplorer";
 import { mapTree, parseTree } from "./tree";
 
+const reducer = (state, action) => {
+  const { type } = action;
+  let { isOpenModal, isOpenAlert, truncated, tree, loading, error } = state;
+
+  switch (action.type) {
+    case "fetch.tree.pending":
+      tree = [];
+      truncated = false;
+      loading = true;
+      error = null;
+      break;
+    case "fetch.tree.success":
+      tree = action.payload.tree;
+      truncated = action.payload.truncated;
+      loading = false;
+      error = null;
+      break;
+    case "fetch.tree.error":
+      tree = [];
+      truncated = false;
+      loading = false;
+      error = action.payload.error;
+      break;
+    case "modal.set":
+      isOpenModal = action.payload;
+      break;
+    case "alert.set":
+      isOpenAlert = action.payload;
+      break;
+    default:
+      return state;
+  }
+  return {
+    ...state,
+    isOpenModal,
+    isOpenAlert,
+    tree,
+    truncated,
+    loading,
+    error,
+  };
+};
+
 function FileWidget() {
   const { repo, cachedFiles } = useApp();
-  const [open, setOpen] = useState(false);
-  const [tree, setTree] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+
+  const [state, dispatch] = useReducer(reducer, {
+    isOpenModal: false,
+    isOpenAlert: true,
+
+    truncated: false,
+    tree: [],
+    loading: false,
+    error: false,
+  });
 
   const inputRef = useRef();
   const loaded = useRef(false);
@@ -25,54 +74,74 @@ function FileWidget() {
   useEmitter(
     Constants.FindFilesActionId,
     () => {
-      setOpen((prev) => !prev);
+      dispatch({ type: "modal.set", payload: true });
     },
-    [setOpen]
+    []
   );
 
-  const close = useCallback((cb) => setOpen(false, cb), [setOpen]);
+  const handleDismiss = useCallback(() => {
+    dispatch({ type: "modal.set", payload: false });
+  }, []);
 
   const handleSelectedItemChange = useCallback(
     (item) => {
       const path = `/${repo.username}/${repo.reponame}/blob/${repo.branch}/${item.inputValue}`;
-      close();
+      handleDismiss();
       loadWithPJAX(path);
     },
-    [repo, close]
+    [repo, handleDismiss]
   );
+
+  const handleSetIsOpenAlert = useCallback(() => {
+    dispatch({ type: "alert.set", payload: false });
+  }, []);
 
   useEffect(() => {
     async function handleFetchTree() {
       try {
-        setLoading(true);
-        const tree = await API.fetchFiles(repo);
+        dispatch({ type: "fetch.tree.pending" });
+        const { tree, truncated } = await API.fetchFiles(repo);
         const parsedTree = await parseTree(tree);
         const sortedTree = await mapTree(parsedTree, cachedFiles, "path");
 
-        setTree(sortedTree);
-        setError(null);
+        dispatch({
+          type: "fetch.tree.success",
+          payload: {
+            tree: sortedTree,
+            truncated,
+          },
+        });
         loaded.current = true;
       } catch (error) {
-        setError(error.message);
+        dispatch({
+          type: "fetch.tree.error",
+          payload: {
+            error: error.message,
+          },
+        });
         loaded.current = false;
-      } finally {
-        setLoading(false);
       }
     }
 
     // TODO: Settings lazy load
-    if (open && !loaded.current) {
+    if (state.isOpenModal && !loaded.current) {
       handleFetchTree();
     }
-  }, [open]);
+  }, [state.isOpenModal]);
 
   useEffect(() => {
     async function handleTree() {
-      setLoading(true);
-      const parsedTree = await parseTree(tree);
+      dispatch({ type: "fetch.tree.pending" });
+      const parsedTree = await parseTree(state.tree);
       const sortedTree = await mapTree(parsedTree, cachedFiles, "path");
-      setTree(sortedTree);
-      setLoading(false);
+
+      dispatch({
+        type: "fetch.tree.success",
+        payload: {
+          tree: sortedTree,
+          truncated: state.truncated,
+        },
+      });
     }
 
     handleTree();
@@ -80,8 +149,8 @@ function FileWidget() {
 
   return (
     <Modal
-      isOpen={open}
-      onDismiss={close}
+      isOpen={state.isOpenModal}
+      onDismiss={handleDismiss}
       initialFocusRef={inputRef}
       dangerouslyBypassScrollLock
       size="xl"
@@ -89,10 +158,9 @@ function FileWidget() {
       <FileExplorer
         ref={inputRef}
         placeholder="Jump to file..."
-        items={tree}
-        loading={loading}
-        error={error}
         onSelectedItemChange={handleSelectedItemChange}
+        setIsOpenAlert={handleSetIsOpenAlert}
+        {...state}
       />
     </Modal>
   );

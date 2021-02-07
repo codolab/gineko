@@ -24,18 +24,23 @@ import Alert from "views/Alert";
 import FileInput from "./FileInput";
 import Highlighter from "./Highlighter";
 
-const isHugRepo = (items) => items.length > Constants.HugeRepo;
-
 const FileExplorer = forwardRef((props, ref) => {
-  const { onSelectedItemChange, placeholder, items, loading, error } = props;
+  const {
+    onSelectedItemChange,
+    placeholder,
+    tree,
+    truncated,
+    loading,
+    error,
+    isOpenAlert,
+    setIsOpenAlert,
+  } = props;
 
   const listRef = useRef(null);
 
-  const [inputItems, setInputItems] = useState(items);
+  const [inputItems, setInputItems] = useState(tree);
   const [inputValue, setInputValue] = useState("");
-  const [shouldDebounce, setShouldDebounce] = useState(isHugRepo(items));
   const [searchLoading, setSearchLoading] = useState(false);
-  const [isOpenAlert, setIsOpenAlert] = useState(true);
 
   const scrollToItem = useCallback((highlightedIndex) => {
     if (listRef.current !== null) {
@@ -45,11 +50,11 @@ const FileExplorer = forwardRef((props, ref) => {
 
   const fuse = useMemo(
     () =>
-      new Fuse(items, {
+      new Fuse(tree, {
         includeScore: true,
         keys: ["basename", "dirname", "path"],
       }),
-    [items]
+    [tree]
   );
 
   const itemToString = useCallback((item) => {
@@ -63,10 +68,10 @@ const FileExplorer = forwardRef((props, ref) => {
         .map((v) => v.item);
 
       if (!inputValue || (inputValue.trim() === "" && results.length === 0))
-        setInputItems(items);
+        setInputItems(tree);
       else setInputItems(results);
     },
-    [fuse, items, setInputItems]
+    [fuse, tree, setInputItems]
   );
 
   const fuseSearchDebounced = useDebounce(
@@ -78,12 +83,12 @@ const FileExplorer = forwardRef((props, ref) => {
             .map((v) => v.item);
 
           if (!inputValue || (inputValue.trim() === "" && results.length === 0))
-            setInputItems(items);
+            setInputItems(tree);
           else setInputItems(results);
           setSearchLoading(false);
         });
       },
-      [fuse, setInputItems, setSearchLoading]
+      [fuse, tree, setInputItems, setSearchLoading]
     ),
     500
   );
@@ -106,7 +111,7 @@ const FileExplorer = forwardRef((props, ref) => {
     onSelectedItemChange,
     onInputValueChange: ({ inputValue, type }) => {
       if (type === useCombobox.stateChangeTypes.InputKeyDownEnter) return;
-      if (shouldDebounce) {
+      if (truncated) {
         setSearchLoading(true);
         fuseSearchDebounced(inputValue);
       } else {
@@ -127,15 +132,14 @@ const FileExplorer = forwardRef((props, ref) => {
 
   useEffect(() => {
     if (!loading) {
-      setInputItems(items);
-      setHighlightedIndex(items.length ? 0 : null);
+      setInputItems(tree);
+      setHighlightedIndex(tree.length ? 0 : null);
     }
-    setShouldDebounce(isHugRepo(items));
-  }, [items]);
+  }, [tree]);
 
   return (
     <div cls="w-full flex-col">
-      {shouldDebounce && (
+      {truncated && (
         <Alert
           status="warning"
           closeable
