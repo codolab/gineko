@@ -35,6 +35,9 @@ const reducer = (state, action) => {
       loading = false;
       error = action.payload.error;
       break;
+    case Constants.SetLoading:
+      loading = action.payload;
+      break;
     case Constants.SetModalOpen:
       isOpenModal = action.payload;
       break;
@@ -103,7 +106,7 @@ function FileWidget() {
         const { tree, truncated } = await API.fetchFiles(repo);
         const parsedTree = await parseTree(tree);
         const sortedTree = await mapTree(parsedTree, cachedFiles, "path");
-
+        
         dispatch({
           type: Constants.FetchTreeSuccess,
           payload: {
@@ -131,7 +134,7 @@ function FileWidget() {
 
   useEffect(() => {
     async function handleTree() {
-      dispatch({ type: Constants.FetchTreePending });
+      dispatch({ type: Constants.SetLoading, payload: true });
       const parsedTree = await parseTree(state.tree);
       const sortedTree = await mapTree(parsedTree, cachedFiles, "path");
 

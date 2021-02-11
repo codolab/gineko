@@ -30,6 +30,7 @@ export const FetchTreePending = "fetch.tree.pending";
 export const FetchTreeSuccess = "fetch.tree.success";
 export const FetchTreeError = "fetch.tree.error";
 
+export const SetLoading = "loading.set";
 export const SetModalOpen = "modal.set";
 export const SetAlertOpen = "alert.set";
 
