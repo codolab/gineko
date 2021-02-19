@@ -1,3 +1,5 @@
+// forked from https://github.com/EnixCoda/Gitako/blob/develop/scripts/fix-pjax-api.js
+
 /**
  * This script rewrites code of pjax-api to resolve compatibility issues.
  * This is a bit dirty but really effective.
